@@ -8,27 +8,26 @@ import (
 )
 
 const (
-	baseUrl string = "https://api.hellosign.com/v3"
+	baseURL string = "https://api.hellosign.com/v3/"
 )
 
-type HelloSign struct {
-	APIKey string
+type Client struct {
+	APIKey     string
+	BaseURL    string
+	HTTPClient *http.Client
 }
 
 type EmbeddedRequest struct {
-	FileUrl  string
-	Subject  string
-	Message  string
+	FileUrl string
+	Subject string
+	Message string
+	// TODO: change this to a struct rather than map
 	Signers  []map[string]string
 	TestMode int
 }
 
-func New(apiKey string) *HelloSign {
-	return &HelloSign{APIKey: apiKey}
-}
-
-func (hs *HelloSign) CreateEmbeddedSignatureRequest(request EmbeddedRequest, clientId string) (*http.Response, error) {
-	endpoint := "https://api.hellosign.com/v3/signature_request/create_embedded"
+func (m *Client) CreateEmbeddedSignatureRequest(request EmbeddedRequest, clientId string) (*http.Response, error) {
+	endpoint := m.GetEndpoint()
 
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)
@@ -77,15 +76,35 @@ func (hs *HelloSign) CreateEmbeddedSignatureRequest(request EmbeddedRequest, cli
 
 	w.Close()
 
-	client := &http.Client{}
+	client := m.GetHTTPClient()
 	apiCall, _ := http.NewRequest("POST", endpoint, &b)
 	apiCall.Header.Add("Content-Type", w.FormDataContentType())
 	if err != nil {
 		return nil, err
 	}
-	apiCall.SetBasicAuth(hs.APIKey, "")
+	apiCall.SetBasicAuth(m.APIKey, "")
 
 	response, err := client.Do(apiCall)
 	defer response.Body.Close()
 	return response, err
+}
+
+func (m *Client) GetEndpoint() string {
+	var url string
+	if m.BaseURL != "" {
+		url = m.BaseURL
+	} else {
+		url = baseURL + "signature_request/create_embedded"
+	}
+	return url
+}
+
+func (m *Client) GetHTTPClient() *http.Client {
+	var http_client *http.Client
+	if m.HTTPClient != nil {
+		http_client = m.HTTPClient
+	} else {
+		http_client = &http.Client{}
+	}
+	return http_client
 }
