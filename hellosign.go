@@ -43,11 +43,11 @@ type Signer struct {
 func (m *Client) CreateEmbeddedSignatureRequest(
 	embeddedRequest EmbeddedRequest) (*http.Response, error) {
 
-	params, w, err := m.marshalMultipartRequest(embeddedRequest)
+	params, writer, err := m.marshalMultipartRequest(embeddedRequest)
 	if err != nil {
 		return nil, err
 	}
-	return m.sendEmbeddedSignatureRequest(params, *w)
+	return m.sendEmbeddedSignatureRequest(params, *writer)
 }
 
 func (m *Client) marshalMultipartRequest(
