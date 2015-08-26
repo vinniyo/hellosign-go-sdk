@@ -16,6 +16,13 @@ type Client struct {
 	HTTPClient *http.Client
 }
 
+type Signer struct {
+	name  string
+	email string
+	order int
+	pin   string
+}
+
 type EmbeddedRequest struct {
 	// TODO: change arrays of maps to arrays of structs and add struct tags
 	TestMode              bool   `field:"test_mode"`
@@ -25,19 +32,12 @@ type EmbeddedRequest struct {
 	Subject               string `field:"subject"`
 	Message               string `field="message"`
 	SigningRedirectURL    string `field="signing_redirect_url"`
-	Signers               []map[string]string
+	Signers               []Signer
 	CCEmailAddress        string `field="cc_email_address"`
 	UseTextTags           bool   `field="use_text_tags"`
 	HideTextTags          bool   `field="hide_text_tags"`
 	Metadata              []map[string]string
 	FormFieldsPerDocument []map[string]string
-}
-
-type Signer struct {
-	name  string
-	email string
-	order int
-	pin   string
 }
 
 func (m *Client) CreateEmbeddedSignatureRequest(
@@ -84,13 +84,13 @@ func (m *Client) marshalMultipartRequest(
 	if err != nil {
 		return nil, nil, err
 	}
-	email.Write([]byte(request.Signers[0]["email"]))
+	email.Write([]byte(request.Signers[0].email))
 
 	name, err := w.CreateFormField("signers[0][name]")
 	if err != nil {
 		return nil, nil, err
 	}
-	name.Write([]byte(request.Signers[0]["name"]))
+	name.Write([]byte(request.Signers[0].name))
 
 	testMode, err := w.CreateFormField("test_mode")
 	if err != nil {

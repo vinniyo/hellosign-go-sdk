@@ -10,7 +10,8 @@ import (
 )
 
 func TestCreateEmbeddedSigningRequest(t *testing.T) {
-	mockClient := createMockClient("1234")
+	mockClient, mockServer := createMockClient("1234")
+	defer mockServer.Close()
 
 	// Create new embedded request struct
 	embReq := EmbeddedRequest{
@@ -18,10 +19,10 @@ func TestCreateEmbeddedSigningRequest(t *testing.T) {
 		FileURL:  "matrix",
 		Subject:  "awesome",
 		Message:  "cool message bro",
-		Signers: []map[string]string{
-			{
-				"email": "freddy@hellosign.com",
-				"name":  "Freddy Rangel",
+		Signers: []Signer{
+			Signer{
+				email: "freddy@hellosign.com",
+				name:  "Freddy Rangel",
 			},
 		},
 		TestMode: true,
@@ -32,23 +33,22 @@ func TestCreateEmbeddedSigningRequest(t *testing.T) {
 	assert.NotNil(t, res, "Should return response")
 }
 
-func createMockClient(key string) Client {
-	fake_server := createMockServer(200, "Everything is cool")
-	defer fake_server.Close()
+func createMockClient(key string) (Client, *httptest.Server) {
+	mockServer := createMockServer(200, "Everything is cool")
 
 	transport := &http.Transport{
 		Proxy: func(req *http.Request) (*url.URL, error) {
-			return url.Parse(fake_server.URL)
+			return url.Parse(mockServer.URL)
 		},
 	}
 	mockHTTPClient := &http.Client{Transport: transport}
 
 	client := Client{
 		APIKey:     key,
-		BaseURL:    fake_server.URL,
+		BaseURL:    mockServer.URL,
 		HTTPClient: mockHTTPClient,
 	}
-	return client
+	return client, mockServer
 }
 
 func createMockServer(status int, body string) *httptest.Server {
