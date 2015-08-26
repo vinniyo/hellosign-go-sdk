@@ -9,32 +9,19 @@ import (
 	"testing"
 )
 
-func TestCreateEmbeddedSigningRequest(t *testing.T) {
+func TestCreateEmbeddedSignatureRequestNotReturnNil(t *testing.T) {
 	mockClient, mockServer := createMockClient("1234")
 	defer mockServer.Close()
-
-	// Create new embedded request struct
-	embReq := EmbeddedRequest{
-		ClientId: "0987",
-		FileURL:  "matrix",
-		Subject:  "awesome",
-		Message:  "cool message bro",
-		Signers: []Signer{
-			Signer{
-				email: "freddy@hellosign.com",
-				name:  "Freddy Rangel",
-			},
-		},
-		TestMode: true,
-	}
-	// Call #CreateEmdeddedSignatureRequest on client struct
+	embReq := createEmbeddedRequest()
 	res, err := mockClient.CreateEmbeddedSignatureRequest(embReq)
 	assert.Nil(t, err, "Should not return error")
 	assert.NotNil(t, res, "Should return response")
 }
 
+// Private Functions
+
 func createMockClient(key string) (Client, *httptest.Server) {
-	mockServer := createMockServer(200, "Everything is cool")
+	mockServer := createMockServer(201, "Everything is cool")
 
 	transport := &http.Transport{
 		Proxy: func(req *http.Request) (*url.URL, error) {
@@ -56,10 +43,26 @@ func createMockServer(status int, body string) *httptest.Server {
 	return testServer
 }
 
-func createMockHandler(status int, _ string) http.HandlerFunc {
+func createMockHandler(status int, body string) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(status)
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintln(w, "Meow")
+		fmt.Fprintf(w, body)
 	})
+}
+
+func createEmbeddedRequest() EmbeddedRequest {
+	return EmbeddedRequest{
+		ClientId: "0987",
+		FileURL:  "matrix",
+		Subject:  "awesome",
+		Message:  "cool message bro",
+		Signers: []Signer{
+			Signer{
+				Email: "freddy@hellosign.com",
+				Name:  "Freddy Rangel",
+			},
+		},
+		TestMode: true,
+	}
 }

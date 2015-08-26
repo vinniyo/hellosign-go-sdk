@@ -2,6 +2,7 @@ package hellosign
 
 import (
 	"bytes"
+	"fmt"
 	"mime/multipart"
 	"net/http"
 )
@@ -17,10 +18,10 @@ type Client struct {
 }
 
 type Signer struct {
-	name  string
-	email string
-	order int
-	pin   string
+	Name  string
+	Email string
+	Order int
+	Pin   string
 }
 
 type EmbeddedRequest struct {
@@ -80,17 +81,19 @@ func (m *Client) marshalMultipartRequest(
 	}
 	message.Write([]byte(request.Subject))
 
-	email, err := w.CreateFormField("signers[0][email_address]")
-	if err != nil {
-		return nil, nil, err
-	}
-	email.Write([]byte(request.Signers[0].email))
+	for i, signer := range request.Signers {
+		email, err := w.CreateFormField(fmt.Sprintf("signers[%v][email_address]", i))
+		if err != nil {
+			return nil, nil, err
+		}
+		email.Write([]byte(signer.Email))
 
-	name, err := w.CreateFormField("signers[0][name]")
-	if err != nil {
-		return nil, nil, err
+		name, err := w.CreateFormField(fmt.Sprintf("signers[%v][name]", i))
+		if err != nil {
+			return nil, nil, err
+		}
+		name.Write([]byte(signer.Name))
 	}
-	name.Write([]byte(request.Signers[0].name))
 
 	testMode, err := w.CreateFormField("test_mode")
 	if err != nil {
