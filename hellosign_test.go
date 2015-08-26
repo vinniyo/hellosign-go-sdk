@@ -28,20 +28,21 @@ func TestCreateEmbeddedSigningRequest(t *testing.T) {
 	}
 
 	// Create new embedded request struct
-	emb_req := EmbeddedRequest{
-		FileUrl: "matrix",
-		Subject: "awesome",
-		Message: "cool message bro",
+	embReq := EmbeddedRequest{
+		ClientId: "0987",
+		FileURL:  "matrix",
+		Subject:  "awesome",
+		Message:  "cool message bro",
 		Signers: []map[string]string{
 			{
 				"email": "freddy@hellosign.com",
 				"name":  "Freddy Rangel",
 			},
 		},
-		TestMode: 0,
+		TestMode: true,
 	}
 	// Call #CreateEmdeddedSignatureRequest on client struct
-	res, err := client.CreateEmbeddedSignatureRequest(emb_req, "0987")
+	res, err := client.CreateEmbeddedSignatureRequest(embReq)
 	assert.Nil(t, err, "Should not return error")
 	assert.NotNil(t, res, "Should return response")
 }
