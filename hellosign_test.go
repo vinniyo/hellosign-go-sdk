@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"testing"
 )
 
@@ -52,17 +53,66 @@ func createMockHandler(status int, body string) http.HandlerFunc {
 }
 
 func createEmbeddedRequest() EmbeddedRequest {
+	fileOne, _ := os.Open("fixtures/offer_letter.pdf")
+	fileOne.Close()
+	fileTwo, _ := os.Open("fixtures/offer_letter.pdf")
+	fileTwo.Close()
 	return EmbeddedRequest{
+		TestMode: true,
 		ClientId: "0987",
-		FileURL:  "matrix",
-		Subject:  "awesome",
-		Message:  "cool message bro",
+		File: []*os.File{
+			fileOne,
+			fileTwo,
+		},
+		Title:              "cool title",
+		Subject:            "awesome",
+		Message:            "cool message bro",
+		SigningRedirectURL: "example signing redirect url",
 		Signers: []Signer{
 			Signer{
 				Email: "freddy@hellosign.com",
 				Name:  "Freddy Rangel",
 			},
+			Signer{
+				Email: "frederick.rangel@gmail.com",
+				Name:  "Frederick Rangel",
+			},
 		},
-		TestMode: true,
+		CCEmailAddresses: []string{
+			"no@cats.com",
+			"no@dogs.com",
+		},
+		UseTextTags:  false,
+		HideTextTags: true,
+		Metadata: map[string]string{
+			"no":   "cats",
+			"more": "dogs",
+		},
+		FormFieldsPerDocument: [][]DocumentFormField{
+			[]DocumentFormField{
+				DocumentFormField{
+					APIId:    "api_id",
+					Name:     "display name",
+					Type:     "text",
+					X:        123,
+					Y:        456,
+					Width:    678,
+					Required: true,
+					Signer:   0,
+				},
+			},
+			[]DocumentFormField{
+				DocumentFormField{
+					APIId:    "api_id_2",
+					Name:     "display name 2",
+					Type:     "text 2",
+					X:        123,
+					Y:        456,
+					Width:    678,
+					Required: true,
+					Signer:   1,
+				},
+			},
+		},
 	}
 }

@@ -2,9 +2,14 @@ package hellosign
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"mime/multipart"
 	"net/http"
+	"os"
+	"reflect"
+	"strconv"
 )
 
 const (
@@ -17,28 +22,40 @@ type Client struct {
 	HTTPClient *http.Client
 }
 
-type Signer struct {
-	Name  string
-	Email string
-	Order int
-	Pin   string
+type EmbeddedRequest struct {
+	TestMode              bool                  `form_field:"test_mode"`
+	ClientId              string                `form_field:"client_id"`
+	FileURL               []string              `form_field:"file_url"`
+	File                  []*os.File            `form_field:"file"`
+	Title                 string                `form_field:"title"`
+	Subject               string                `form_field:"subject"`
+	Message               string                `form_field:"message"`
+	SigningRedirectURL    string                `form_field:"signing_redirect_url"`
+	Signers               []Signer              `form_field:"signers"`
+	CCEmailAddresses      []string              `form_field:"cc_email_addresses"`
+	UseTextTags           bool                  `form_field:"use_text_tags"`
+	HideTextTags          bool                  `form_field:"hide_text_tags"`
+	Metadata              map[string]string     `form_field:"metadata"`
+	FormFieldsPerDocument [][]DocumentFormField `form_field:"form_fields_per_document"`
 }
 
-type EmbeddedRequest struct {
-	// TODO: change arrays of maps to arrays of structs and add struct tags
-	TestMode              bool   `field:"test_mode"`
-	ClientId              string `field:"client_id"`
-	FileURL               string `field:"file_url[]"`
-	Title                 string `field="title"`
-	Subject               string `field:"subject"`
-	Message               string `field="message"`
-	SigningRedirectURL    string `field="signing_redirect_url"`
-	Signers               []Signer
-	CCEmailAddress        string `field="cc_email_address"`
-	UseTextTags           bool   `field="use_text_tags"`
-	HideTextTags          bool   `field="hide_text_tags"`
-	Metadata              []map[string]string
-	FormFieldsPerDocument []map[string]string
+type Signer struct {
+	Name  string `field:"name"`
+	Email string `field:"email"`
+	Order int    `field:"order"`
+	Pin   string `field:"pin"`
+}
+
+type DocumentFormField struct {
+	APIId    string `json:"api_id"`
+	Name     string `json:"name"`
+	Type     string `json:"type"`
+	X        int    `json:"x"`
+	Y        int    `json:"y"`
+	Width    int    `json:"width"`
+	Height   int    `json:"height"`
+	Required bool   `json:"required"`
+	Signer   int    `json:"signer"`
 }
 
 func (m *Client) CreateEmbeddedSignatureRequest(
@@ -51,55 +68,117 @@ func (m *Client) CreateEmbeddedSignatureRequest(
 	return m.sendEmbeddedSignatureRequest(params, *writer)
 }
 
+// Private Methods
+
 func (m *Client) marshalMultipartRequest(
-	request EmbeddedRequest) (*bytes.Buffer, *multipart.Writer, error) {
+	embRequest EmbeddedRequest) (*bytes.Buffer, *multipart.Writer, error) {
 
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)
 
-	fileUrl, err := w.CreateFormField("file_url[]")
-	if err != nil {
-		return nil, nil, err
-	}
-	fileUrl.Write([]byte(request.FileURL))
+	structType := reflect.TypeOf(embRequest)
+	val := reflect.ValueOf(embRequest)
 
-	client_id, err := w.CreateFormField("client_id")
-	if err != nil {
-		return nil, nil, err
-	}
-	client_id.Write([]byte(request.ClientId))
+	for i := 0; i < val.NumField(); i++ {
 
-	subject, err := w.CreateFormField("subject")
-	if err != nil {
-		return nil, nil, err
-	}
-	subject.Write([]byte(request.Subject))
+		valueField := val.Field(i)
+		f := valueField.Interface()
+		val := reflect.ValueOf(f)
+		field := structType.Field(i)
+		fieldTag := field.Tag.Get("form_field")
 
-	message, err := w.CreateFormField("message")
-	if err != nil {
-		return nil, nil, err
-	}
-	message.Write([]byte(request.Subject))
+		switch val.Kind() {
+		case reflect.Map:
+			for k, v := range embRequest.Metadata {
+				formField, err := w.CreateFormField(fmt.Sprintf("metadata[%v]", k))
+				if err != nil {
+					return nil, nil, err
+				}
+				formField.Write([]byte(v))
+			}
+		case reflect.Slice:
+			switch fieldTag {
+			case "signers":
+				for i, signer := range embRequest.Signers {
+					email, err := w.CreateFormField(fmt.Sprintf("signers[%v][email_address]", i))
+					if err != nil {
+						return nil, nil, err
+					}
+					email.Write([]byte(signer.Email))
 
-	for i, signer := range request.Signers {
-		email, err := w.CreateFormField(fmt.Sprintf("signers[%v][email_address]", i))
-		if err != nil {
-			return nil, nil, err
+					name, err := w.CreateFormField(fmt.Sprintf("signers[%v][name]", i))
+					if err != nil {
+						return nil, nil, err
+					}
+					name.Write([]byte(signer.Name))
+
+					if signer.Order != 0 {
+						order, err := w.CreateFormField(fmt.Sprintf("signers[%v][order]", i))
+						if err != nil {
+							return nil, nil, err
+						}
+						order.Write([]byte(strconv.Itoa(signer.Order)))
+					}
+
+					if signer.Pin != "" {
+						pin, err := w.CreateFormField(fmt.Sprintf("signers[%v][pin]", i))
+						if err != nil {
+							return nil, nil, err
+						}
+						pin.Write([]byte(signer.Pin))
+					}
+				}
+			case "cc_email_addresses":
+				for k, v := range embRequest.CCEmailAddresses {
+					formField, err := w.CreateFormField(fmt.Sprintf("cc_email_addresses[%v]", k))
+					if err != nil {
+						return nil, nil, err
+					}
+					formField.Write([]byte(v))
+				}
+			case "form_fields_per_document":
+				formField, err := w.CreateFormField(fieldTag)
+				if err != nil {
+					return nil, nil, err
+				}
+				ffpdJSON, err := json.Marshal(embRequest.FormFieldsPerDocument)
+				if err != nil {
+					return nil, nil, err
+				}
+				formField.Write([]byte(ffpdJSON))
+			case "file":
+				for i, file := range embRequest.File {
+					formField, err := w.CreateFormFile(fmt.Sprintf("file[%v]", i), file.Name())
+					if err != nil {
+						return nil, nil, err
+					}
+					_, err = io.Copy(formField, file)
+				}
+			case "file_url":
+				for i, fileURL := range embRequest.FileURL {
+					formField, err := w.CreateFormField(fmt.Sprintf("file_url[%v]", i))
+					if err != nil {
+						return nil, nil, err
+					}
+					formField.Write([]byte(fileURL))
+				}
+			}
+		case reflect.Bool:
+			formField, err := w.CreateFormField(fieldTag)
+			if err != nil {
+				return nil, nil, err
+			}
+			formField.Write([]byte(m.boolToIntString(val.Bool())))
+		default:
+			if val.String() != "" {
+				formField, err := w.CreateFormField(fieldTag)
+				if err != nil {
+					return nil, nil, err
+				}
+				formField.Write([]byte(val.String()))
+			}
 		}
-		email.Write([]byte(signer.Email))
-
-		name, err := w.CreateFormField(fmt.Sprintf("signers[%v][name]", i))
-		if err != nil {
-			return nil, nil, err
-		}
-		name.Write([]byte(signer.Name))
 	}
-
-	testMode, err := w.CreateFormField("test_mode")
-	if err != nil {
-		return nil, nil, err
-	}
-	testMode.Write([]byte(m.boolToIntString(request.TestMode)))
 
 	w.Close()
 	return &b, w, nil
