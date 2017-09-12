@@ -2,41 +2,54 @@ package hellosign
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
+	"log"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"os"
 	"testing"
+
+	"github.com/dnaeon/go-vcr/recorder"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCreateEmbeddedSignatureRequestNotReturnNil(t *testing.T) {
-	mockClient, mockServer := createMockClient("1234")
-	defer mockServer.Close()
+	// Start our recorder
+	vcr := fixture("fixtures/embedded_signature_request")
+	defer vcr.Stop() // Make sure recorder is stopped once done with it
+
+	client := createVcrClient(vcr)
+
 	embReq := createEmbeddedRequest()
-	res, err := mockClient.CreateEmbeddedSignatureRequest(embReq)
-	assert.Nil(t, err, "Should not return error")
+	res, err := client.CreateEmbeddedSignatureRequest(embReq)
+
 	assert.NotNil(t, res, "Should return response")
+	assert.Nil(t, err, "Should not return error")
+
+	assert.Equal(t, "6d7ad140141a7fe6874fec55931c363e0301c353", res.SignatureRequestID)
+	assert.Equal(t, "awesome", res.Subject)
+	assert.Equal(t, true, res.TestMode)
+	assert.Equal(t, false, res.IsComplete)
+	assert.Equal(t, false, res.IsDeclined)
 }
 
 // Private Functions
 
-func createMockClient(key string) (Client, *httptest.Server) {
-	mockServer := createMockServer(201, "Everything is cool")
-
-	transport := &http.Transport{
-		Proxy: func(req *http.Request) (*url.URL, error) {
-			return url.Parse(mockServer.URL)
-		},
+func fixture(path string) *recorder.Recorder {
+	vcr, err := recorder.New(path)
+	if err != nil {
+		log.Fatal(err)
 	}
-	mockHTTPClient := &http.Client{Transport: transport}
+	return vcr
+}
+
+func createVcrClient(transport *recorder.Recorder) Client {
+	httpClient := &http.Client{Transport: transport}
 
 	client := Client{
-		APIKey:     key,
-		BaseURL:    mockServer.URL,
-		HTTPClient: mockHTTPClient,
+		APIKey:     os.Getenv("HELLO_SIGN_API_KEY"),
+		HTTPClient: httpClient,
 	}
-	return client, mockServer
+	return client
 }
 
 func createMockServer(status int, body string) *httptest.Server {
@@ -54,20 +67,19 @@ func createMockHandler(status int, body string) http.HandlerFunc {
 
 func createEmbeddedRequest() EmbeddedRequest {
 	fileOne, _ := os.Open("fixtures/offer_letter.pdf")
-	fileOne.Close()
 	fileTwo, _ := os.Open("fixtures/offer_letter.pdf")
-	fileTwo.Close()
+
 	return EmbeddedRequest{
 		TestMode: true,
-		ClientId: "0987",
+		ClientID: os.Getenv("HELLOSIGN_CLIENT_ID"),
 		File: []*os.File{
 			fileOne,
 			fileTwo,
 		},
-		Title:              "cool title",
-		Subject:            "awesome",
-		Message:            "cool message bro",
-		SigningRedirectURL: "example signing redirect url",
+		Title:   "cool title",
+		Subject: "awesome",
+		Message: "cool message bro",
+		// SigningRedirectURL: "example signing redirect url",
 		Signers: []Signer{
 			Signer{
 				Email: "freddy@hellosign.com",
@@ -105,7 +117,7 @@ func createEmbeddedRequest() EmbeddedRequest {
 				DocumentFormField{
 					APIId:    "api_id_2",
 					Name:     "display name 2",
-					Type:     "text 2",
+					Type:     "text",
 					X:        123,
 					Y:        456,
 					Width:    678,
