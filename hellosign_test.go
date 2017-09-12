@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCreateEmbeddedSignatureRequestNotReturnNil(t *testing.T) {
+func TestCreateEmbeddedSignatureRequestSuccess(t *testing.T) {
 	// Start our recorder
 	vcr := fixture("fixtures/embedded_signature_request")
 	defer vcr.Stop() // Make sure recorder is stopped once done with it
@@ -32,6 +32,43 @@ func TestCreateEmbeddedSignatureRequestNotReturnNil(t *testing.T) {
 	assert.Equal(t, false, res.IsDeclined)
 }
 
+func TestGetSignatureRequest(t *testing.T) {
+	vcr := fixture("fixtures/get_signature_request")
+	defer vcr.Stop() // Make sure recorder is stopped once done with it
+
+	client := createVcrClient(vcr)
+
+	res, err := client.GetSignatureRequest("6d7ad140141a7fe6874fec55931c363e0301c353")
+
+	assert.NotNil(t, res, "Should return response")
+	assert.Nil(t, err, "Should not return error")
+
+	assert.Equal(t, "6d7ad140141a7fe6874fec55931c363e0301c353", res.SignatureRequestID)
+	assert.Equal(t, "awesome", res.Subject)
+	assert.Equal(t, true, res.TestMode)
+	assert.Equal(t, false, res.IsComplete)
+	assert.Equal(t, false, res.IsDeclined)
+}
+
+func TestGetSignatureRequests(t *testing.T) {
+	vcr := fixture("fixtures/list_signature_requests")
+	defer vcr.Stop() // Make sure recorder is stopped once done with it
+
+	client := createVcrClient(vcr)
+
+	res, err := client.ListSignatureRequests()
+
+	assert.NotNil(t, res, "Should return response")
+	assert.Nil(t, err, "Should not return error")
+
+	assert.Equal(t, 1, res.ListInfo.NumPages)
+	assert.Equal(t, 1, res.ListInfo.Page)
+	assert.Equal(t, 19, res.ListInfo.NumResults)
+	assert.Equal(t, 20, res.ListInfo.PageSize)
+
+	assert.Equal(t, 19, len(res.SignatureRequests))
+}
+
 // Private Functions
 
 func fixture(path string) *recorder.Recorder {
@@ -46,7 +83,7 @@ func createVcrClient(transport *recorder.Recorder) Client {
 	httpClient := &http.Client{Transport: transport}
 
 	client := Client{
-		APIKey:     os.Getenv("HELLO_SIGN_API_KEY"),
+		APIKey:     os.Getenv("HELLOSIGN_API_KEY"),
 		HTTPClient: httpClient,
 	}
 	return client

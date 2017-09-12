@@ -17,12 +17,14 @@ const (
 	baseURL string = "https://api.hellosign.com/v3/"
 )
 
+// Client contains APIKey and optional http.client
 type Client struct {
 	APIKey     string
 	BaseURL    string
 	HTTPClient *http.Client
 }
 
+// EmbeddedRequest contains the request parameters for create_embedded
 type EmbeddedRequest struct {
 	TestMode              bool                  `form_field:"test_mode"`
 	ClientID              string                `form_field:"client_id"`
@@ -64,24 +66,24 @@ type SignatureRequestResponse struct {
 }
 
 type SignatureRequest struct {
-	TestMode              bool            `json:"test_mode"`               // Whether this is a test signature request. Test requests have no legal value. Defaults to 0.
-	SignatureRequestID    string          `json:"signature_request_id"`    // The id of the SignatureRequest.
-	RequesterEmailAddress string          `json:"requester_email_address"` // The email address of the initiator of the SignatureRequest.
-	Title                 string          `json:"title"`                   // The title the specified Account uses for the SignatureRequest.
-	Subject               string          `json:"subject"`                 // The subject in the email that was initially sent to the signers.
-	Message               string          `json:"message"`                 // The custom message in the email that was initially sent to the signers.
-	IsComplete            bool            `json:"is_complete"`             // Whether or not the SignatureRequest has been fully executed by all signers.
-	IsDeclined            bool            `json:"is_declined"`             // Whether or not the SignatureRequest has been declined by a signer.
-	HasError              bool            `json:"has_error"`               // Whether or not an error occurred (either during the creation of the SignatureRequest or during one of the signings).
-	FilesURL              string          `json:"files_url"`               // The URL where a copy of the request's documents can be downloaded.
-	SigningURL            string          `json:"signing_url"`             // The URL where a signer, after authenticating, can sign the documents. This should only be used by users with existing HelloSign accounts as they will be required to log in before signing.
-	DetailsURL            string          `json:"details_url"`             // The URL where the requester and the signers can view the current status of the SignatureRequest.
-	CCEmailAddress        []*string       `json:"cc_email_addresses"`      // A list of email addresses that were CCed on the SignatureRequest. They will receive a copy of the final PDF once all the signers have signed.
-	SigningRedirectURL    string          `json:"signing_redirect_url"`    // The URL you want the signer redirected to after they successfully sign.
-	CustomFields          []*CustomField  `json:"custom_fields"`           // An array of Custom Field objects containing the name and type of each custom field.
-	ResponseDsata         []*ResponseData `json:"response_data"`           // An array of form field objects containing the name, value, and type of each textbox or checkmark field filled in by the signers.
-	Signatures            []*Signature    `json:"signatures"`              // An array of signature objects, 1 for each signer.
-	Warnings              []*Warning      `json:"warnings"`                // An array of warning objects.
+	TestMode              bool                     `json:"test_mode"`               // Whether this is a test signature request. Test requests have no legal value. Defaults to 0.
+	SignatureRequestID    string                   `json:"signature_request_id"`    // The id of the SignatureRequest.
+	RequesterEmailAddress string                   `json:"requester_email_address"` // The email address of the initiator of the SignatureRequest.
+	Title                 string                   `json:"title"`                   // The title the specified Account uses for the SignatureRequest.
+	Subject               string                   `json:"subject"`                 // The subject in the email that was initially sent to the signers.
+	Message               string                   `json:"message"`                 // The custom message in the email that was initially sent to the signers.
+	IsComplete            bool                     `json:"is_complete"`             // Whether or not the SignatureRequest has been fully executed by all signers.
+	IsDeclined            bool                     `json:"is_declined"`             // Whether or not the SignatureRequest has been declined by a signer.
+	HasError              bool                     `json:"has_error"`               // Whether or not an error occurred (either during the creation of the SignatureRequest or during one of the signings).
+	FilesURL              string                   `json:"files_url"`               // The URL where a copy of the request's documents can be downloaded.
+	SigningURL            string                   `json:"signing_url"`             // The URL where a signer, after authenticating, can sign the documents. This should only be used by users with existing HelloSign accounts as they will be required to log in before signing.
+	DetailsURL            string                   `json:"details_url"`             // The URL where the requester and the signers can view the current status of the SignatureRequest.
+	CCEmailAddress        []*string                `json:"cc_email_addresses"`      // A list of email addresses that were CCed on the SignatureRequest. They will receive a copy of the final PDF once all the signers have signed.
+	SigningRedirectURL    string                   `json:"signing_redirect_url"`    // The URL you want the signer redirected to after they successfully sign.
+	CustomFields          []map[string]interface{} `json:"custom_fields"`           // An array of Custom Field objects containing the name and type of each custom field.
+	ResponseDsata         []*ResponseData          `json:"response_data"`           // An array of form field objects containing the name, value, and type of each textbox or checkmark field filled in by the signers.
+	Signatures            []*Signature             `json:"signatures"`              // An array of signature objects, 1 for each signer.
+	Warnings              []*Warning               `json:"warnings"`                // An array of warning objects.
 }
 
 type CustomField struct {
@@ -108,9 +110,9 @@ type Signature struct {
 	Order              int    `json:"order"`                // If signer order is assigned this is the 0-based index for this signer.
 	StatusCode         string `json:"status_code"`          // The current status of the signature. eg: awaiting_signature, signed, declined
 	DeclineReason      string `json:"decline_reason"`       // The reason provided by the signer for declining the request.
-	SignatedAt         string `json:"signed_at"`            // Time that the document was signed or null.
-	LastViewedAt       string `json:"last_viewed_at"`       //The time that the document was last viewed by this signer or null.
-	LastRemindedAt     string `json:"last_reminded_at"`     //The time the last reminder email was sent to the signer or null.
+	SignatedAt         int    `json:"signed_at"`            // Time that the document was signed or null.
+	LastViewedAt       int    `json:"last_viewed_at"`       //The time that the document was last viewed by this signer or null.
+	LastRemindedAt     int    `json:"last_reminded_at"`     //The time the last reminder email was sent to the signer or null.
 	HasPin             bool   `json:"has_pin"`              // Boolean to indicate whether this signature requires a PIN to access.
 }
 
@@ -119,6 +121,19 @@ type Warning struct {
 	Name    string `json:"warning_name"`
 }
 
+type ListResponse struct {
+	ListInfo          *ListInfo           `json:"list_info"`
+	SignatureRequests []*SignatureRequest `json:"signature_requests"`
+}
+
+type ListInfo struct {
+	NumPages   int `json:"num_pages"`   // Total number of pages available
+	NumResults int `json:"num_results"` // Total number of objects available
+	Page       int `json:"page"`        // Number of the page being returned
+	PageSize   int `json:"page_size"`   // Objects returned per page
+}
+
+// CreateEmbeddedSignatureRequest creates a new embedded signature
 func (m *Client) CreateEmbeddedSignatureRequest(
 	embeddedRequest EmbeddedRequest) (*SignatureRequest, error) {
 
@@ -126,7 +141,41 @@ func (m *Client) CreateEmbeddedSignatureRequest(
 	if err != nil {
 		return nil, err
 	}
-	return m.sendEmbeddedSignatureRequest(params, *writer)
+	response, err := m.post("signature_request/create_embedded", params, *writer)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return m.sendSignatureRequest(response)
+}
+
+// GetSignatureRequest returns specified request id
+func (m *Client) GetSignatureRequest(signatureRequestID string) (*SignatureRequest, error) {
+	path := fmt.Sprintf("signature_request/%s", signatureRequestID)
+	response, err := m.get(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return m.sendSignatureRequest(response)
+}
+
+// ListSignatureRequests returns list of signature requests
+func (m *Client) ListSignatureRequests() (*ListResponse, error) {
+	path := fmt.Sprintf("signature_request/list")
+	response, err := m.get(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer response.Body.Close()
+
+	listResponse := &ListResponse{}
+	err = json.NewDecoder(response.Body).Decode(listResponse)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return listResponse, err
 }
 
 // Private Methods
@@ -248,10 +297,23 @@ func (m *Client) marshalMultipartRequest(
 	return &b, w, nil
 }
 
-func (m *Client) sendEmbeddedSignatureRequest(
-	params *bytes.Buffer, w multipart.Writer) (*SignatureRequest, error) {
-	endpoint := fmt.Sprintf("%s%s", m.getEndpoint(), "signature_request/create_embedded")
-	log.Println(endpoint)
+func (m *Client) get(path string) (*http.Response, error) {
+	endpoint := fmt.Sprintf("%s%s", m.getEndpoint(), path)
+
+	var b bytes.Buffer
+	request, _ := http.NewRequest("GET", endpoint, &b)
+	request.SetBasicAuth(m.APIKey, "")
+
+	response, err := m.getHTTPClient().Do(request)
+	if err != nil {
+		return nil, err
+	}
+
+	return response, err
+}
+
+func (m *Client) post(path string, params *bytes.Buffer, w multipart.Writer) (*http.Response, error) {
+	endpoint := fmt.Sprintf("%s%s", m.getEndpoint(), path)
 	request, _ := http.NewRequest("POST", endpoint, params)
 	request.Header.Add("Content-Type", w.FormDataContentType())
 	request.SetBasicAuth(m.APIKey, "")
@@ -260,12 +322,15 @@ func (m *Client) sendEmbeddedSignatureRequest(
 	if err != nil {
 		return nil, err
 	}
+	return response, err
+}
 
+func (m *Client) sendSignatureRequest(response *http.Response) (*SignatureRequest, error) {
 	defer response.Body.Close()
 
 	sigRequestResponse := &SignatureRequestResponse{}
 
-	err = json.NewDecoder(response.Body).Decode(sigRequestResponse)
+	err := json.NewDecoder(response.Body).Decode(sigRequestResponse)
 
 	sigRequest := sigRequestResponse.SignatureRequest
 
