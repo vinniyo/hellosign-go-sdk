@@ -3,6 +3,7 @@ package hellosign
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -81,7 +82,7 @@ type SignatureRequest struct {
 	CCEmailAddress        []*string                `json:"cc_email_addresses"`      // A list of email addresses that were CCed on the SignatureRequest. They will receive a copy of the final PDF once all the signers have signed.
 	SigningRedirectURL    string                   `json:"signing_redirect_url"`    // The URL you want the signer redirected to after they successfully sign.
 	CustomFields          []map[string]interface{} `json:"custom_fields"`           // An array of Custom Field objects containing the name and type of each custom field.
-	ResponseDsata         []*ResponseData          `json:"response_data"`           // An array of form field objects containing the name, value, and type of each textbox or checkmark field filled in by the signers.
+	ResponseData          []*ResponseData          `json:"response_data"`           // An array of form field objects containing the name, value, and type of each textbox or checkmark field filled in by the signers.
 	Signatures            []*Signature             `json:"signatures"`              // An array of signature objects, 1 for each signer.
 	Warnings              []*Warning               `json:"warnings"`                // An array of warning objects.
 }
@@ -133,6 +134,24 @@ type ListInfo struct {
 	PageSize   int `json:"page_size"`   // Objects returned per page
 }
 
+type ErrorResponse struct {
+	Error *Error `json:"error"`
+}
+
+type Error struct {
+	Message string `json:"error_msg"`
+	Name    string `json:"error_name"`
+}
+
+type EmbeddedResponse struct {
+	Embedded *SignURLResponse `json:"embedded"`
+}
+
+type SignURLResponse struct {
+	SignURL   string `json:"sign_url"`   // URL of the signature page to display in the embedded iFrame.
+	ExpiresAt int    `json:"expires_at"` // When the link expires.
+}
+
 // CreateEmbeddedSignatureRequest creates a new embedded signature
 func (m *Client) CreateEmbeddedSignatureRequest(
 	embeddedRequest EmbeddedRequest) (*SignatureRequest, error) {
@@ -149,7 +168,7 @@ func (m *Client) CreateEmbeddedSignatureRequest(
 	return m.sendSignatureRequest(response)
 }
 
-// GetSignatureRequest returns specified request id
+// GetSignatureRequest - Gets a SignatureRequest that includes the current status for each signer.
 func (m *Client) GetSignatureRequest(signatureRequestID string) (*SignatureRequest, error) {
 	path := fmt.Sprintf("signature_request/%s", signatureRequestID)
 	response, err := m.get(path)
@@ -159,7 +178,24 @@ func (m *Client) GetSignatureRequest(signatureRequestID string) (*SignatureReque
 	return m.sendSignatureRequest(response)
 }
 
-// ListSignatureRequests returns list of signature requests
+// GetEmbeddedSignURL - Retrieves an embedded signing object.
+func (m *Client) GetEmbeddedSignURL(signatureRequestID string) (*SignURLResponse, error) {
+	path := fmt.Sprintf("embedded/sign_url/%s", signatureRequestID)
+	response, err := m.get(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	data := &EmbeddedResponse{}
+	err = json.NewDecoder(response.Body).Decode(data)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return data.Embedded, nil
+}
+
+// ListSignatureRequests - Lists the SignatureRequests (both inbound and outbound) that you have access to.
 func (m *Client) ListSignatureRequests() (*ListResponse, error) {
 	path := fmt.Sprintf("signature_request/list")
 	response, err := m.get(path)
@@ -176,6 +212,52 @@ func (m *Client) ListSignatureRequests() (*ListResponse, error) {
 	}
 
 	return listResponse, err
+}
+
+// UpdateSignatureRequest - Update an email address on a signature request.
+func (m *Client) UpdateSignatureRequest(signatureRequestID string, signatureID string, email string) (*SignatureRequest, error) {
+	path := fmt.Sprintf("signature_request/update/%s", signatureRequestID)
+
+	var params bytes.Buffer
+	writer := multipart.NewWriter(&params)
+
+	signatureIDField, err := writer.CreateFormField("signature_id")
+	if err != nil {
+		return nil, err
+	}
+	signatureIDField.Write([]byte(signatureID))
+
+	emailField, err := writer.CreateFormField("email_address")
+	if err != nil {
+		return nil, err
+	}
+	emailField.Write([]byte(email))
+
+	response, err := m.post(path, &params, *writer)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if response.StatusCode != 200 {
+		e := &ErrorResponse{}
+		json.NewDecoder(response.Body).Decode(e)
+		msg := fmt.Sprintf("%s: %s", e.Error.Name, e.Error.Message)
+		return nil, errors.New(msg)
+	}
+
+	return m.sendSignatureRequest(response)
+}
+
+// CancelSignatureRequest - Cancels an incomplete signature request. This action is not reversible.
+func (m *Client) CancelSignatureRequest(signatureRequestID string) (*http.Response, error) {
+	path := fmt.Sprintf("signature_request/cancel/%s", signatureRequestID)
+
+	response, err := m.nakedPost(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return response, err
 }
 
 // Private Methods
@@ -316,6 +398,19 @@ func (m *Client) post(path string, params *bytes.Buffer, w multipart.Writer) (*h
 	endpoint := fmt.Sprintf("%s%s", m.getEndpoint(), path)
 	request, _ := http.NewRequest("POST", endpoint, params)
 	request.Header.Add("Content-Type", w.FormDataContentType())
+	request.SetBasicAuth(m.APIKey, "")
+
+	response, err := m.getHTTPClient().Do(request)
+	if err != nil {
+		return nil, err
+	}
+	return response, err
+}
+
+func (m *Client) nakedPost(path string) (*http.Response, error) {
+	endpoint := fmt.Sprintf("%s%s", m.getEndpoint(), path)
+	var b bytes.Buffer
+	request, _ := http.NewRequest("POST", endpoint, &b)
 	request.SetBasicAuth(m.APIKey, "")
 
 	response, err := m.getHTTPClient().Do(request)

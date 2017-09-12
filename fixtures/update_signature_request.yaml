@@ -1,0 +1,55 @@
+---
+version: 1
+rwmutex: {}
+interactions:
+- request:
+    body: "--d2a43ec4e312eb63bb85f8fca905249b71be6f7ab00c6a891933dcb475a8\r\nContent-Disposition:
+      form-data; name=\"signature_id\"\r\n\r\ndeaf86bfb33764d9a215a07cc060122d\r\n--d2a43ec4e312eb63bb85f8fca905249b71be6f7ab00c6a891933dcb475a8\r\nContent-Disposition:
+      form-data; name=\"email_address\"\r\n\r\nfranky@hellosign.com"
+    form: {}
+    headers:
+      Authorization:
+      - Basic YTA1NjU0YjMjQ5ZWVmOWNlMTY2MTRmNmQ2Nzo=
+      Content-Type:
+      - multipart/form-data; boundary=d2a43ec4e312eb63bb85f8fca905249b71be6f7ab00c6a891933dcb475a8
+    url: https://api.hellosign.com/v3/signature_request/update/9040be434b1301e31019b3dad895ed580f8ca890
+    method: POST
+  response:
+    body: '{"signature_request":{"signature_request_id":"9040be434b1301e31019b3dad895ed580f8ca890","test_mode":true,"title":"cool
+      title","original_title":"awesome","subject":"awesome","message":"cool message
+      bro","metadata":{"no":"cats","more":"dogs"},"is_complete":false,"is_declined":false,"has_error":false,"custom_fields":[{"name":"display
+      name","type":"text","required":true,"api_id":"api_id","editor":null,"value":null},{"name":"display
+      name 2","type":"text","required":true,"api_id":"api_id_2","editor":null,"value":null}],"response_data":[],"signing_url":null,"signing_redirect_url":null,"final_copy_uri":"\/v3\/signature_request\/final_copy\/9040be434b1301e31019b3dad895ed580f8ca890","files_url":"https:\/\/api.hellosign.com\/v3\/signature_request\/files\/9040be434b1301e31019b3dad895ed580f8ca890","details_url":"https:\/\/app.hellosign.com\/home\/manage?guid=9040be434b1301e31019b3dad895ed580f8ca890","requester_email_address":"joeheth@gmail.com","signatures":[{"signature_id":"deaf86bfb33764d9a215a07cc060122d","has_pin":false,"signer_email_address":"franky@hellosign.com","signer_name":"Freddy
+      Rangel","order":null,"status_code":"awaiting_signature","signed_at":null,"last_viewed_at":null,"last_reminded_at":null,"error":null},{"signature_id":"14fe2ee807bce07a3053a722d1ba0243","has_pin":false,"signer_email_address":"frederick.rangel@gmail.com","signer_name":"Frederick
+      Rangel","order":null,"status_code":"awaiting_signature","signed_at":null,"last_viewed_at":null,"last_reminded_at":null,"error":null}],"cc_email_addresses":["no@cats.com","no@dogs.com"]}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Origin, X-Requested-With, Content-Type, Accept
+      Access-Control-Allow-Methods:
+      - GET, POST, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 12 Sep 2017 21:56:09 GMT
+      P3p:
+      - CP="NOP3PPOLICY"
+      Server:
+      - Apache
+      Strict-Transport-Security:
+      - max-age=15768000
+      User-Agent:
+      - HelloSign API
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Limit:
+      - "2000"
+      X-Ratelimit-Limit-Remaining:
+      - "1998"
+      X-Ratelimit-Reset:
+      - "1505253369"
+    status: 200 OK
+    code: 200

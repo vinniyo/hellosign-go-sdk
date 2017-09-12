@@ -1,0 +1,49 @@
+---
+version: 1
+rwmutex: {}
+interactions:
+- request:
+    body: "--1d37d77b880d452a767a14bd0eec84f3af1ec22be31bb77d6370ed5413ba\r\nContent-Disposition:
+      form-data; name=\"signature_id\"\r\n\r\nd82212e10dcf71ad465e033907074423\r\n--d2a43ec4e312eb63bb85f8fca905249b71be6f7ab00c6a891933dcb475a8\r\nContent-Disposition:
+      form-data; name=\"email_address\"\r\n\r\nfranky@hellosign.com"
+    form: {}
+    headers:
+      Authorization:
+      - Basic YTA1NjU0YjMjQ5ZWVmOWNlMTY2MTRmNmQ2Nzo=
+      Content-Type:
+      - multipart/form-data; boundary=1d37d77b880d452a767a14bd0eec84f3af1ec22be31bb77d6370ed5413ba
+    url: https://api.hellosign.com/v3/signature_request/update/5c002b65dfefab79795a521bef312c45914cc48d
+    method: POST
+  response:
+    body: '{"error":{"error_msg":"This resource has been deleted","error_name":"deleted"}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Origin, X-Requested-With, Content-Type, Accept
+      Access-Control-Allow-Methods:
+      - GET, POST, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "79"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 12 Sep 2017 20:55:05 GMT
+      P3p:
+      - CP="NOP3PPOLICY"
+      Server:
+      - Apache
+      Strict-Transport-Security:
+      - max-age=15768000
+      User-Agent:
+      - HelloSign API
+      X-Ratelimit-Limit:
+      - "2000"
+      X-Ratelimit-Limit-Remaining:
+      - "1999"
+      X-Ratelimit-Reset:
+      - "1505249705"
+    status: 410 Gone
+    code: 410

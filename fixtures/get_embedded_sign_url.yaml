@@ -1,0 +1,45 @@
+---
+version: 1
+rwmutex: {}
+interactions:
+- request:
+    body: ""
+    form: {}
+    headers:
+      Authorization:
+      - Basic YTA1NjU0YjMjQ5ZWVmOWNlMTY2MTRmNmQ2Nzo=
+    url: https://api.hellosign.com/v3/embedded/sign_url/deaf86bfb33764d9a215a07cc060122d
+    method: GET
+  response:
+    body: '{"embedded":{"sign_url":"https:\/\/app.hellosign.com\/editor\/embeddedSign?signature_id=deaf86bfb33764d9a215a07cc060122d&token=0ea2a93ad3c97201f69de482b258c981","expires_at":1505259198}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Origin, X-Requested-With, Content-Type, Accept
+      Access-Control-Allow-Methods:
+      - GET, POST, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 12 Sep 2017 22:33:18 GMT
+      P3p:
+      - CP="NOP3PPOLICY"
+      Server:
+      - Apache
+      Strict-Transport-Security:
+      - max-age=15768000
+      User-Agent:
+      - HelloSign API
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Limit:
+      - "2000"
+      X-Ratelimit-Limit-Remaining:
+      - "1998"
+      X-Ratelimit-Reset:
+      - "1505255598"
+    status: 200 OK
+    code: 200

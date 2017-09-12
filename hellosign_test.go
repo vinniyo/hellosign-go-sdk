@@ -69,6 +69,72 @@ func TestGetSignatureRequests(t *testing.T) {
 	assert.Equal(t, 19, len(res.SignatureRequests))
 }
 
+func TestGetEmbeddedSignURL(t *testing.T) {
+	vcr := fixture("fixtures/get_embedded_sign_url")
+	defer vcr.Stop() // Make sure recorder is stopped once done with it
+
+	client := createVcrClient(vcr)
+
+	res, err := client.GetEmbeddedSignURL("deaf86bfb33764d9a215a07cc060122d")
+
+	assert.NotNil(t, res, "Should return response")
+	assert.Nil(t, err, "Should not return error")
+
+	assert.Contains(t, res.SignURL, "embeddedSign?signature_id=deaf86bfb33764d9a215a07cc060122d&token=")
+	assert.Equal(t, 1505259198, res.ExpiresAt)
+}
+
+func TestCancelSignatureRequests(t *testing.T) {
+	vcr := fixture("fixtures/cancel_signature_request")
+	defer vcr.Stop() // Make sure recorder is stopped once done with it
+
+	client := createVcrClient(vcr)
+
+	res, err := client.CancelSignatureRequest("5c002b65dfefab79795a521bef312c45914cc48d")
+
+	assert.NotNil(t, res, "Should return response")
+	assert.Nil(t, err, "Should not return error")
+
+	assert.Equal(t, 200, res.StatusCode)
+}
+
+func TestUpdateSignatureRequestSuccess(t *testing.T) {
+	vcr := fixture("fixtures/update_signature_request")
+	defer vcr.Stop() // Make sure recorder is stopped once done with it
+
+	client := createVcrClient(vcr)
+
+	res, err := client.UpdateSignatureRequest(
+		"9040be434b1301e31019b3dad895ed580f8ca890",
+		"deaf86bfb33764d9a215a07cc060122d",
+		"franky@hellosign.com",
+	)
+
+	assert.Nil(t, err, "Should not return error")
+	assert.NotNil(t, res, "Should return response")
+
+	assert.Equal(t, "9040be434b1301e31019b3dad895ed580f8ca890", res.SignatureRequestID)
+	assert.Equal(t, "franky@hellosign.com", res.Signatures[0].SignerEmailAddress)
+}
+
+func TestUpdateSignatureRequestFails(t *testing.T) {
+	vcr := fixture("fixtures/update_signature_request_deleted")
+	defer vcr.Stop() // Make sure recorder is stopped once done with it
+
+	client := createVcrClient(vcr)
+
+	res, err := client.UpdateSignatureRequest(
+		"5c002b65dfefab79795a521bef312c45914cc48d",
+		"d82212e10dcf71ad465e033907074423",
+		"franky@hellosign.com",
+	)
+
+	assert.Nil(t, res, "Should return response")
+	assert.NotNil(t, err, "Should not return error")
+
+	assert.Equal(t, "deleted: This resource has been deleted", err.Error())
+}
+
 // Private Functions
 
 func fixture(path string) *recorder.Recorder {

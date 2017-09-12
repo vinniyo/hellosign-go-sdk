@@ -1,0 +1,45 @@
+---
+version: 1
+rwmutex: {}
+interactions:
+- request:
+    body: ""
+    form: {}
+    headers:
+      Authorization:
+      - Basic YTA1NjU0YjMjQ5ZWVmOWNlMTY2MTRmNmQ2Nzo=
+    url: https://api.hellosign.com/v3/signature_request/cancel/5c002b65dfefab79795a521bef312c45914cc48d
+    method: POST
+  response:
+    body: ""
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Origin, X-Requested-With, Content-Type, Accept
+      Access-Control-Allow-Methods:
+      - GET, POST, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Connection:
+      - keep-alive
+      Content-Length:
+      - "0"
+      Content-Type:
+      - text/html; charset=utf-8
+      Date:
+      - Tue, 12 Sep 2017 20:29:13 GMT
+      P3p:
+      - CP="NOP3PPOLICY"
+      Server:
+      - Apache
+      Strict-Transport-Security:
+      - max-age=15768000
+      User-Agent:
+      - HelloSign API
+      X-Ratelimit-Limit:
+      - "2000"
+      X-Ratelimit-Limit-Remaining:
+      - "1998"
+      X-Ratelimit-Reset:
+      - "1505248153"
+    status: 200 OK
+    code: 200
