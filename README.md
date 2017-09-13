@@ -1,125 +1,228 @@
 # HelloSign Go SDK
 A Go wrapper for the HelloSign API.
 
-**Not Ready For Release**
+The unofficial library for using the HelloSign API for golang.
 
-The official library for using the HelloSign API for golang.
+https://app.hellosign.com/api/reference
 
+## Installation
+
+```go
+go get github.com/jheth/hellosign-go-sdk
+```
 ## Usage
 
-```go
-go get github.com/HelloFax/hellosign-go-sdk
-```
-
-Create a client:
+### Client
 
 ```go
-client := hellosign.Client{APIKey: "ACCOUNT API KEY HERE"}
+client := hellosign.Client{APIKey: "ACCOUNT API KEY"}
 ```
 
-### Signature Request Methods
+### Embedded Signature Request
 
-#### Create Embedded Signature Request Using Files
+__using FileURL__
 
 ```go
-  fileOne, _ := os.Open("public/offer_letter.pdf")
-  defer fileOne.Close()
-  fileTwo, _ := os.Open("public/offer_letter.pdf")
-  defer fileTwo.Close()
+request := hellosign.EmbeddedRequest{
+  TestMode: true,
+  ClientID: os.Getenv("HELLOSIGN_CLIENT_ID"),
+  FileURL:  []string{"http://www.pdf995.com/samples/pdf.pdf"},
+  Title:    "My First Document",
+  Subject:  "Contract",
+  Signers: []hellosign.Signer{
+    hellosign.Signer{
+      Email: "jane@example.com",
+      Name:  "Jane Doe",
+    },
+  },
+}
 
-  request := hellosign.EmbeddedRequest{
-    TestMode: true,
-    ClientId: os.Getenv("HS_CLIENT_ID"),
-    File: []*os.File{
-      fileOne,
-      fileTwo,
-    },
-    Title:              "cool title",
-    Subject:            "awesome",
-    Message:            "cool message bro",
-    SigningRedirectURL: "https://google.com",
-    Signers: []hellosign.Signer{
-      hellosign.Signer{
-        Email: "freddy@hellosign.com",
-        Name:  "Freddy Rangel",
-        Pin:   "1234",
-        Order: 1,
-      },
-      hellosign.Signer{
-        Email: "frederick.rangel@gmail.com",
-        Name:  "Frederick Rangel",
-        Pin:   "1234",
-        Order: 2,
-      },
-    },
-    CCEmailAddresses: []string{
-      "no@cats.com",
-      "no@dogs.com",
-    },
-    UseTextTags:  false,
-    HideTextTags: true,
-    Metadata: map[string]string{
-      "no":   "cats",
-      "more": "dogs",
-    },
-    FormFieldsPerDocument: [][]hellosign.DocumentFormField{
-      []hellosign.DocumentFormField{
-        hellosign.DocumentFormField{
-          APIId:    "api_id",
-          Name:     "display name",
-          Type:     "text",
-          X:        123,
-          Y:        456,
-          Width:    678,
-          Required: true,
-          Signer:   0,
-        },
-      },
-      []hellosign.DocumentFormField{
-        hellosign.DocumentFormField{
-          APIId:    "api_id_2",
-          Name:     "display name 2",
-          Type:     "text",
-          X:        123,
-          Y:        456,
-          Width:    678,
-          Required: true,
-          Signer:   1,
-        },
-      },
-    },
-  }
-  response, err := client.CreateEmbeddedSignatureRequest(request)
-  if err != nil {
-    log.Fatal(err)
-  } else {
-    fmt.Println(response)
-  }
-
+response, err := client.CreateEmbeddedSignatureRequest(request)
+if err != nil {
+  log.Fatal(err)
+}
+// type SignatureRequest
+fmt.Println(response.SignatureRequestID)
 ```
 
+__using File__
+```go
+file, _ := os.Open("public/offer_letter.pdf")
 
-# License
+request := hellosign.EmbeddedRequest{
+  TestMode: true,
+  ClientID: "APP_CLIENT_ID",
+  File:     []*os.File{file},
+  Title:    "My First Document",
+  Subject:  "Contract",
+  Signers:  []hellosign.Signer{
+    hellosign.Signer{
+      Email: "jane@doe.com",
+      Name:  "Jane Doe",
+    },
+    hellosign.Signer{
+      Email: "john@gmail.com",
+      Name:  "John DOe",
+    },
+  },
+}
+
+response, err := client.CreateEmbeddedSignatureRequest(request)
+if err != nil {
+  log.Fatal(err)
+}
+// type SignatureRequest
+fmt.Println(response.SignatureRequestID)
 ```
-The MIT License (MIT)
 
-Copyright (C) 2015 hellosign.com
+__Full Feature__
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+```go
+fileOne, _ := os.Open("public/offer_letter.pdf")
+fileTwo, _ := os.Open("public/offer_letter.pdf")
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+request := hellosign.EmbeddedRequest{
+  TestMode: true,
+  ClientID: os.Getenv("HS_CLIENT_ID"),
+  File: []*os.File{
+    fileOne,
+    fileTwo,
+  },
+  Title:              "cool title",
+  Subject:            "awesome",
+  Message:            "cool message bro",
+  Signers: []hellosign.Signer{
+    hellosign.Signer{
+      Email: "freddy@hellosign.com",
+      Name:  "Freddy Rangel",
+      Pin:   "1234",
+      Order: 1,
+    },
+    hellosign.Signer{
+      Email: "frederick.rangel@gmail.com",
+      Name:  "Frederick Rangel",
+      Pin:   "1234",
+      Order: 2,
+    },
+  },
+  CCEmailAddresses: []string{
+    "no@cats.com",
+    "no@dogs.com",
+  },
+  UseTextTags:  false,
+  HideTextTags: true,
+  Metadata: map[string]string{
+    "no":   "cats",
+    "more": "dogs",
+  },
+  FormFieldsPerDocument: [][]hellosign.DocumentFormField{
+    []hellosign.DocumentFormField{
+      hellosign.DocumentFormField{
+        APIId:    "api_id",
+        Name:     "display name",
+        Type:     "text",
+        X:        123,
+        Y:        456,
+        Width:    678,
+        Required: true,
+        Signer:   0,
+      },
+    },
+    []hellosign.DocumentFormField{
+      hellosign.DocumentFormField{
+        APIId:    "api_id_2",
+        Name:     "display name 2",
+        Type:     "text",
+        X:        123,
+        Y:        456,
+        Width:    678,
+        Required: true,
+        Signer:   1,
+      },
+    },
+  },
+}
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+response, err := client.CreateEmbeddedSignatureRequest(request)
+if err != nil {
+  log.Fatal(err)
+}
+// type SignatureRequest
+fmt.Println(response.SignatureRequestID)
+```
+
+### Get Signature Request
+
+```go
+// uses SignatureRequestID
+res, err := client.GetSignatureRequest("6d7ad140141a7fe6874fec55931c363e0301c353")
+
+// res is SignatureRequest type
+res.SignatureRequestID
+res.Signatures
+```
+
+### Get Embedded Sign URL
+
+```go
+// uses SignerID
+res, err := client.GetEmbeddedSignURL("deaf86bfb33764d9a215a07cc060122d")
+
+res.SignURL =>  "https://app.hellosign.com/editor/embeddedSign?signature_id=deaf86bfb33764d9a215a07cc060122d&token=TOKEN"
+```
+
+### Get PDF
+
+```go
+// uses SignatureRequestID
+fileInfo, err := client.GetPDF("6d7ad140141a7fe6874fec55931c363e0301c353", "/tmp/download.pdf")
+
+fileInfo.Size() => 98781
+fileInfo.Name() => "download.pdf"
+```
+
+### Get Files
+
+```go
+// uses SignatureRequestID
+fileInfo, err := client.GetFiles("6d7ad140141a7fe6874fec55931c363e0301c353", "zip",  "/tmp/download.zip")
+
+fileInfo.Size() => 98781
+fileInfo.Name() => "download.zip"
+```
+
+### List Signature Requests
+
+```go
+res, err := client.ListSignatureRequests()
+
+res.ListInfo.NumPages => 1
+res.ListInfo.Page => 1
+res.ListInfo.NumResults => 19
+res.ListInfo.PageSize => 20
+
+len(res.SignatureRequests) => 19
+```
+
+### Update Signature Request
+
+```go
+res, err := client.UpdateSignatureRequest(
+  "9040be434b1301e31019b3dad895ed580f8ca890", // SignatureRequestID
+  "deaf86bfb33764d9a215a07cc060122d", // SignatureID
+  "joe@hello.com", // New Email
+)
+
+res.SignatureRequestID => "9040be434b1301e31019b3dad895ed580f8ca890"
+res.Signatures[0].SignerEmailAddress => "joe@hello.com"
+```
+
+### Cancel Signature Request
+
+```go
+// uses SignatureRequestID
+res, err := client.CancelSignatureRequest("5c002b65dfefab79795a521bef312c45914cc48d")
+
+// res is *http.Response
+res.StatusCode => 200
 ```
