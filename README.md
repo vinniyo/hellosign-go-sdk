@@ -1,3 +1,5 @@
+[![build status](https://img.shields.io/travis/jheth/hellosign-go-sdk.svg)](http://travis-ci.org/jheth/hellosign-go-sdk)
+
 # HelloSign Go SDK
 A Go wrapper for the HelloSign API.
 
