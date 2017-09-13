@@ -216,15 +216,13 @@ func createMockHandler(status int, body string) http.HandlerFunc {
 }
 
 func createEmbeddedRequest() EmbeddedRequest {
-	fileOne, _ := os.Open("fixtures/offer_letter.pdf")
-	fileTwo, _ := os.Open("fixtures/offer_letter.pdf")
 
 	return EmbeddedRequest{
 		TestMode: true,
 		ClientID: os.Getenv("HELLOSIGN_CLIENT_ID"),
-		File: []*os.File{
-			fileOne,
-			fileTwo,
+		File: []string{
+			"fixtures/offer_letter.pdf",
+			"fixtures/offer_letter.pdf",
 		},
 		Title:   "cool title",
 		Subject: "awesome",

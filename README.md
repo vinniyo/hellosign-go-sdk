@@ -48,13 +48,12 @@ fmt.Println(response.SignatureRequestID)
 ```
 
 __using File__
-```go
-file, _ := os.Open("public/offer_letter.pdf")
 
+```go
 request := hellosign.EmbeddedRequest{
   TestMode: true,
   ClientID: "APP_CLIENT_ID",
-  File:     []*os.File{file},
+  File:     []string{"public/offer_letter.pdf"},
   Title:    "My First Document",
   Subject:  "Contract",
   Signers:  []hellosign.Signer{
@@ -80,19 +79,16 @@ fmt.Println(response.SignatureRequestID)
 __Full Feature__
 
 ```go
-fileOne, _ := os.Open("public/offer_letter.pdf")
-fileTwo, _ := os.Open("public/offer_letter.pdf")
-
 request := hellosign.EmbeddedRequest{
   TestMode: true,
   ClientID: os.Getenv("HS_CLIENT_ID"),
-  File: []*os.File{
-    fileOne,
-    fileTwo,
+  File: []string{
+    "public/offer_letter.pdf",
+    "public/offer_letter.pdf",
   },
-  Title:              "cool title",
-  Subject:            "awesome",
-  Message:            "cool message bro",
+  Title:     "My Document",
+  Subject:   "Please Sign",
+  Message:   "A message can go here.",
   Signers: []hellosign.Signer{
     hellosign.Signer{
       Email: "freddy@hellosign.com",

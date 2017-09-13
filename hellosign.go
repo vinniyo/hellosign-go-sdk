@@ -29,7 +29,7 @@ type EmbeddedRequest struct {
 	TestMode              bool                  `form_field:"test_mode"`
 	ClientID              string                `form_field:"client_id"`
 	FileURL               []string              `form_field:"file_url"`
-	File                  []*os.File            `form_field:"file"`
+	File                  []string              `form_field:"file"`
 	Title                 string                `form_field:"title"`
 	Subject               string                `form_field:"subject"`
 	Message               string                `form_field:"message"`
@@ -382,7 +382,9 @@ func (m *Client) marshalMultipartRequest(
 					formField.Write([]byte(ffpdJSON))
 				}
 			case "file":
-				for i, file := range embRequest.File {
+				for i, path := range embRequest.File {
+					file, _ := os.Open(path)
+
 					formField, err := w.CreateFormFile(fmt.Sprintf("file[%v]", i), file.Name())
 					if err != nil {
 						return nil, nil, err
