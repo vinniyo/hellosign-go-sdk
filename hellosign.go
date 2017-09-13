@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -160,9 +159,10 @@ func (m *Client) CreateEmbeddedSignatureRequest(
 	if err != nil {
 		return nil, err
 	}
+
 	response, err := m.post("signature_request/create_embedded", params, *writer)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	return m.sendSignatureRequest(response)
@@ -173,7 +173,7 @@ func (m *Client) GetSignatureRequest(signatureRequestID string) (*SignatureReque
 	path := fmt.Sprintf("signature_request/%s", signatureRequestID)
 	response, err := m.get(path)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	return m.sendSignatureRequest(response)
 }
@@ -183,13 +183,13 @@ func (m *Client) GetEmbeddedSignURL(signatureRequestID string) (*SignURLResponse
 	path := fmt.Sprintf("embedded/sign_url/%s", signatureRequestID)
 	response, err := m.get(path)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	data := &EmbeddedResponse{}
 	err = json.NewDecoder(response.Body).Decode(data)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	return data.Embedded, nil
@@ -223,14 +223,14 @@ func (m *Client) GetFiles(signatureRequestID string, fileType string, destFilePa
 
 	response, err := m.request("GET", path, &params, *writer)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	defer response.Body.Close()
 
 	out, err := os.Create(destFilePath)
 	if err != nil {
-		// panic?
+		return nil, err
 	}
 
 	io.Copy(out, response.Body)
@@ -238,7 +238,7 @@ func (m *Client) GetFiles(signatureRequestID string, fileType string, destFilePa
 
 	info, err := os.Stat(destFilePath)
 	if err != nil {
-		log.Fatal("Failed to stat downloaded file")
+		return nil, err
 	}
 	return info, nil
 }
@@ -248,7 +248,7 @@ func (m *Client) ListSignatureRequests() (*ListResponse, error) {
 	path := fmt.Sprintf("signature_request/list")
 	response, err := m.get(path)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	defer response.Body.Close()
@@ -256,7 +256,7 @@ func (m *Client) ListSignatureRequests() (*ListResponse, error) {
 	listResponse := &ListResponse{}
 	err = json.NewDecoder(response.Body).Decode(listResponse)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	return listResponse, err
@@ -283,14 +283,7 @@ func (m *Client) UpdateSignatureRequest(signatureRequestID string, signatureID s
 
 	response, err := m.post(path, &params, *writer)
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	if response.StatusCode != 200 {
-		e := &ErrorResponse{}
-		json.NewDecoder(response.Body).Decode(e)
-		msg := fmt.Sprintf("%s: %s", e.Error.Name, e.Error.Message)
-		return nil, errors.New(msg)
+		return nil, err
 	}
 
 	return m.sendSignatureRequest(response)
@@ -302,7 +295,7 @@ func (m *Client) CancelSignatureRequest(signatureRequestID string) (*http.Respon
 
 	response, err := m.nakedPost(path)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	return response, err
@@ -395,9 +388,6 @@ func (m *Client) marshalMultipartRequest(
 						return nil, nil, err
 					}
 					_, err = io.Copy(formField, file)
-					if err != nil {
-						log.Fatal(err)
-					}
 				}
 			case "file_url":
 				for i, fileURL := range embRequest.FileURL {
@@ -458,6 +448,14 @@ func (m *Client) request(method string, path string, params *bytes.Buffer, w mul
 	if err != nil {
 		return nil, err
 	}
+
+	if response.StatusCode >= 400 {
+		e := &ErrorResponse{}
+		json.NewDecoder(response.Body).Decode(e)
+		msg := fmt.Sprintf("%s: %s", e.Error.Name, e.Error.Message)
+		return response, errors.New(msg)
+	}
+
 	return response, err
 }
 
