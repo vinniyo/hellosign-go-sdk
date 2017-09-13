@@ -1,0 +1,58 @@
+---
+version: 1
+rwmutex: {}
+interactions:
+- request:
+    body: "--c9eba067d628877e0430d161e32a71be03d82fb0e4cf139718bdc30a48f8\r\nContent-Disposition:
+      form-data; name=\"test_mode\"\r\n\r\n1\r\n--c9eba067d628877e0430d161e32a71be03d82fb0e4cf139718bdc30a48f8\r\nContent-Disposition:
+      form-data; name=\"client_id\"\r\n\r\n6b2d43473fdf7096960ce5bf0230fb80\r\n--c9eba067d628877e0430d161e32a71be03d82fb0e4cf139718bdc30a48f8\r\nContent-Disposition:
+      form-data; name=\"file_url[0]\"\r\n\r\nhttp://www.pdf995.com/samples/pdf.pdf\r\n--c9eba067d628877e0430d161e32a71be03d82fb0e4cf139718bdc30a48f8\r\nContent-Disposition:
+      form-data; name=\"title\"\r\n\r\nMy First Document\r\n--c9eba067d628877e0430d161e32a71be03d82fb0e4cf139718bdc30a48f8\r\nContent-Disposition:
+      form-data; name=\"subject\"\r\n\r\nContract\r\n--c9eba067d628877e0430d161e32a71be03d82fb0e4cf139718bdc30a48f8\r\nContent-Disposition:
+      form-data; name=\"signers[0][email_address]\"\r\n\r\njane@example.com\r\n--c9eba067d628877e0430d161e32a71be03d82fb0e4cf139718bdc30a48f8\r\nContent-Disposition:
+      form-data; name=\"signers[0][name]\"\r\n\r\nJane Doe\r\n--c9eba067d628877e0430d161e32a71be03d82fb0e4cf139718bdc30a48f8\r\nContent-Disposition:
+      form-data; name=\"use_text_tags\"\r\n\r\n0\r\n--c9eba067d628877e0430d161e32a71be03d82fb0e4cf139718bdc30a48f8\r\nContent-Disposition:
+      form-data; name=\"hide_text_tags\"\r\n\r\n0\r\n--c9eba067d628877e0430d161e32a71be03d82fb0e4cf139718bdc30a48f8--\r\n"
+    form: {}
+    headers:
+      Authorization:
+      - Basic YTA1NjU0YjMjQ5ZWVmOWNlMTY2MTRmNmQ2Nzo=
+      Content-Type:
+      - multipart/form-data; boundary=c9eba067d628877e0430d161e32a71be03d82fb0e4cf139718bdc30a48f8
+    url: https://api.hellosign.com/v3/signature_request/create_embedded
+    method: POST
+  response:
+    body: '{"signature_request":{"signature_request_id":"c9af885443fad587aa2a4698086c08c64233df64","test_mode":true,"title":"My
+      First Document","original_title":"Contract","subject":"Contract","message":null,"metadata":{},"is_complete":false,"is_declined":false,"has_error":false,"custom_fields":[],"response_data":[],"signing_url":null,"signing_redirect_url":null,"final_copy_uri":"\/v3\/signature_request\/final_copy\/c9af885443fad587aa2a4698086c08c64233df64","files_url":"https:\/\/api.hellosign.com\/v3\/signature_request\/files\/c9af885443fad587aa2a4698086c08c64233df64","details_url":"https:\/\/app.hellosign.com\/home\/manage?guid=c9af885443fad587aa2a4698086c08c64233df64","requester_email_address":"joeheth@gmail.com","signatures":[{"signature_id":"164904cb1d642b0f48e0a5ac3124aac5","has_pin":false,"signer_email_address":"jane@example.com","signer_name":"Jane
+      Doe","order":null,"status_code":"awaiting_signature","signed_at":null,"last_viewed_at":null,"last_reminded_at":null,"error":null}],"cc_email_addresses":[]}}'
+    headers:
+      Access-Control-Allow-Headers:
+      - Authorization, Origin, X-Requested-With, Content-Type, Accept
+      Access-Control-Allow-Methods:
+      - GET, POST, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 13 Sep 2017 00:41:31 GMT
+      P3p:
+      - CP="NOP3PPOLICY"
+      Server:
+      - Apache
+      Strict-Transport-Security:
+      - max-age=15768000
+      User-Agent:
+      - HelloSign API
+      Vary:
+      - Accept-Encoding
+      X-Ratelimit-Limit:
+      - "50"
+      X-Ratelimit-Limit-Remaining:
+      - "48"
+      X-Ratelimit-Reset:
+      - "1505263291"
+    status: 200 OK
+    code: 200

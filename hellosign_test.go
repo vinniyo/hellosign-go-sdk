@@ -32,6 +32,38 @@ func TestCreateEmbeddedSignatureRequestSuccess(t *testing.T) {
 	assert.Equal(t, false, res.IsDeclined)
 }
 
+func TestCreateEmbeddedSignatureRequestFileURL(t *testing.T) {
+	// Start our recorder
+	vcr := fixture("fixtures/embedded_signature_request_file_url")
+	defer vcr.Stop() // Make sure recorder is stopped once done with it
+
+	client := createVcrClient(vcr)
+
+	request := EmbeddedRequest{
+		TestMode: true,
+		ClientID: os.Getenv("HELLOSIGN_CLIENT_ID"),
+		FileURL:  []string{"http://www.pdf995.com/samples/pdf.pdf"},
+		Title:    "My First Document",
+		Subject:  "Contract",
+		Signers: []Signer{
+			Signer{
+				Email: "jane@example.com",
+				Name:  "Jane Doe",
+			},
+		},
+	}
+
+	res, err := client.CreateEmbeddedSignatureRequest(request)
+	assert.NotNil(t, res, "Should return response")
+	assert.Nil(t, err, "Should not return error")
+
+	assert.Equal(t, "c9af885443fad587aa2a4698086c08c64233df64", res.SignatureRequestID)
+	assert.Equal(t, "My First Document", res.Title)
+	assert.Equal(t, true, res.TestMode)
+	assert.Equal(t, false, res.IsComplete)
+	assert.Equal(t, false, res.IsDeclined)
+}
+
 func TestGetSignatureRequest(t *testing.T) {
 	vcr := fixture("fixtures/get_signature_request")
 	defer vcr.Stop() // Make sure recorder is stopped once done with it
@@ -82,6 +114,21 @@ func TestGetEmbeddedSignURL(t *testing.T) {
 
 	assert.Contains(t, res.SignURL, "embeddedSign?signature_id=deaf86bfb33764d9a215a07cc060122d&token=")
 	assert.Equal(t, 1505259198, res.ExpiresAt)
+}
+
+func TestGetPDF(t *testing.T) {
+	vcr := fixture("fixtures/get_pdf")
+	defer vcr.Stop() // Make sure recorder is stopped once done with it
+
+	client := createVcrClient(vcr)
+
+	fileInfo, err := client.GetPDF("6d7ad140141a7fe6874fec55931c363e0301c353", "/tmp/download.pdf")
+
+	assert.NotNil(t, fileInfo, "Should return response")
+	assert.Nil(t, err, "Should not return error")
+
+	assert.Equal(t, int64(98781), fileInfo.Size())
+	assert.Equal(t, "download.pdf", fileInfo.Name())
 }
 
 func TestCancelSignatureRequests(t *testing.T) {

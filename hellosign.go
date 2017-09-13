@@ -195,6 +195,54 @@ func (m *Client) GetEmbeddedSignURL(signatureRequestID string) (*SignURLResponse
 	return data.Embedded, nil
 }
 
+// GetPDF - Obtain a copy of the current pdf specified by the signature_request_id parameter.
+func (m *Client) GetPDF(signatureRequestID string, destFilePath string) (os.FileInfo, error) {
+	return m.GetFiles(signatureRequestID, "pdf", destFilePath)
+}
+
+// GetFiles - Obtain a copy of the current documents specified by the signature_request_id parameter.
+// signatureRequestID - The id of the SignatureRequest to retrieve.
+// fileType - Set to "pdf" for a single merged document or "zip" for a collection of individual documents.
+func (m *Client) GetFiles(signatureRequestID string, fileType string, destFilePath string) (os.FileInfo, error) {
+	path := fmt.Sprintf("signature_request/files/%s", signatureRequestID)
+
+	var params bytes.Buffer
+	writer := multipart.NewWriter(&params)
+
+	signatureIDField, err := writer.CreateFormField("file_type")
+	if err != nil {
+		return nil, err
+	}
+	signatureIDField.Write([]byte(fileType))
+
+	emailField, err := writer.CreateFormField("get_url")
+	if err != nil {
+		return nil, err
+	}
+	emailField.Write([]byte("false"))
+
+	response, err := m.request("GET", path, &params, *writer)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer response.Body.Close()
+
+	out, err := os.Create(destFilePath)
+	if err != nil {
+		// panic?
+	}
+
+	io.Copy(out, response.Body)
+	out.Close()
+
+	info, err := os.Stat(destFilePath)
+	if err != nil {
+		log.Fatal("Failed to stat downloaded file")
+	}
+	return info, nil
+}
+
 // ListSignatureRequests - Lists the SignatureRequests (both inbound and outbound) that you have access to.
 func (m *Client) ListSignatureRequests() (*ListResponse, error) {
 	path := fmt.Sprintf("signature_request/list")
@@ -329,15 +377,17 @@ func (m *Client) marshalMultipartRequest(
 					formField.Write([]byte(v))
 				}
 			case "form_fields_per_document":
-				formField, err := w.CreateFormField(fieldTag)
-				if err != nil {
-					return nil, nil, err
+				if len(embRequest.FormFieldsPerDocument) > 0 {
+					formField, err := w.CreateFormField(fieldTag)
+					if err != nil {
+						return nil, nil, err
+					}
+					ffpdJSON, err := json.Marshal(embRequest.FormFieldsPerDocument)
+					if err != nil {
+						return nil, nil, err
+					}
+					formField.Write([]byte(ffpdJSON))
 				}
-				ffpdJSON, err := json.Marshal(embRequest.FormFieldsPerDocument)
-				if err != nil {
-					return nil, nil, err
-				}
-				formField.Write([]byte(ffpdJSON))
 			case "file":
 				for i, file := range embRequest.File {
 					formField, err := w.CreateFormFile(fmt.Sprintf("file[%v]", i), file.Name())
@@ -395,8 +445,12 @@ func (m *Client) get(path string) (*http.Response, error) {
 }
 
 func (m *Client) post(path string, params *bytes.Buffer, w multipart.Writer) (*http.Response, error) {
+	return m.request("POST", path, params, w)
+}
+
+func (m *Client) request(method string, path string, params *bytes.Buffer, w multipart.Writer) (*http.Response, error) {
 	endpoint := fmt.Sprintf("%s%s", m.getEndpoint(), path)
-	request, _ := http.NewRequest("POST", endpoint, params)
+	request, _ := http.NewRequest(method, endpoint, params)
 	request.Header.Add("Content-Type", w.FormDataContentType())
 	request.SetBasicAuth(m.APIKey, "")
 
