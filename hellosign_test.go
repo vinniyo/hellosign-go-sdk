@@ -1,10 +1,8 @@
 package hellosign
 
 import (
-	"fmt"
 	"log"
 	"net/http"
-	"net/http/httptest"
 	"os"
 	"testing"
 
@@ -116,19 +114,33 @@ func TestGetEmbeddedSignURL(t *testing.T) {
 	assert.Equal(t, 1505259198, res.ExpiresAt)
 }
 
-func TestGetPDF(t *testing.T) {
+func TestSaveFile(t *testing.T) {
 	vcr := fixture("fixtures/get_pdf")
 	defer vcr.Stop() // Make sure recorder is stopped once done with it
 
 	client := createVcrClient(vcr)
 
-	fileInfo, err := client.GetPDF("6d7ad140141a7fe6874fec55931c363e0301c353", "/tmp/download.pdf")
+	fileInfo, err := client.SaveFile("6d7ad140141a7fe6874fec55931c363e0301c353", "pdf", "/tmp/download.pdf")
 
 	assert.NotNil(t, fileInfo, "Should return response")
 	assert.Nil(t, err, "Should not return error")
 
 	assert.Equal(t, int64(98781), fileInfo.Size())
 	assert.Equal(t, "download.pdf", fileInfo.Name())
+}
+
+func TestGetPDF(t *testing.T) {
+	vcr := fixture("fixtures/get_pdf")
+	defer vcr.Stop() // Make sure recorder is stopped once done with it
+
+	client := createVcrClient(vcr)
+
+	data, err := client.GetPDF("6d7ad140141a7fe6874fec55931c363e0301c353")
+
+	assert.NotNil(t, data, "Should return response")
+	assert.Nil(t, err, "Should not return error")
+
+	assert.Equal(t, 98781, len(data))
 }
 
 func TestCancelSignatureRequests(t *testing.T) {
@@ -200,19 +212,6 @@ func createVcrClient(transport *recorder.Recorder) Client {
 		HTTPClient: httpClient,
 	}
 	return client
-}
-
-func createMockServer(status int, body string) *httptest.Server {
-	testServer := httptest.NewServer(createMockHandler(status, body))
-	return testServer
-}
-
-func createMockHandler(status int, body string) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(status)
-		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, body)
-	})
 }
 
 func createEmbeddedRequest() EmbeddedRequest {

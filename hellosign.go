@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -195,15 +196,32 @@ func (m *Client) GetEmbeddedSignURL(signatureRequestID string) (*SignURLResponse
 	return data.Embedded, nil
 }
 
+func (m *Client) SaveFile(signatureRequestID, fileType, destFilePath string) (os.FileInfo, error) {
+	bytes, err := m.GetFiles(signatureRequestID, fileType)
+
+	out, err := os.Create(destFilePath)
+	if err != nil {
+		return nil, err
+	}
+	out.Write(bytes)
+	out.Close()
+
+	info, err := os.Stat(destFilePath)
+	if err != nil {
+		return nil, err
+	}
+	return info, nil
+}
+
 // GetPDF - Obtain a copy of the current pdf specified by the signature_request_id parameter.
-func (m *Client) GetPDF(signatureRequestID string, destFilePath string) (os.FileInfo, error) {
-	return m.GetFiles(signatureRequestID, "pdf", destFilePath)
+func (m *Client) GetPDF(signatureRequestID string) ([]byte, error) {
+	return m.GetFiles(signatureRequestID, "pdf")
 }
 
 // GetFiles - Obtain a copy of the current documents specified by the signature_request_id parameter.
 // signatureRequestID - The id of the SignatureRequest to retrieve.
 // fileType - Set to "pdf" for a single merged document or "zip" for a collection of individual documents.
-func (m *Client) GetFiles(signatureRequestID string, fileType string, destFilePath string) (os.FileInfo, error) {
+func (m *Client) GetFiles(signatureRequestID, fileType string) ([]byte, error) {
 	path := fmt.Sprintf("signature_request/files/%s", signatureRequestID)
 
 	var params bytes.Buffer
@@ -228,19 +246,12 @@ func (m *Client) GetFiles(signatureRequestID string, fileType string, destFilePa
 
 	defer response.Body.Close()
 
-	out, err := os.Create(destFilePath)
+	data, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	io.Copy(out, response.Body)
-	out.Close()
-
-	info, err := os.Stat(destFilePath)
-	if err != nil {
-		return nil, err
-	}
-	return info, nil
+	return data, nil
 }
 
 // ListSignatureRequests - Lists the SignatureRequests (both inbound and outbound) that you have access to.
