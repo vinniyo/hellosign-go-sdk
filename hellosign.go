@@ -166,6 +166,12 @@ type SignURLResponse struct {
 	ExpiresAt int    `json:"expires_at"` // When the link expires.
 }
 
+func (m *Client) WithHTTPClient(httpClient *http.Client) *Client {
+	m.HTTPClient = httpClient
+
+	return m
+}
+
 // CreateEmbeddedSignatureRequest creates a new embedded signature
 func (m *Client) CreateEmbeddedSignatureRequest(
 	embeddedRequest EmbeddedRequest) (*SignatureRequest, error) {

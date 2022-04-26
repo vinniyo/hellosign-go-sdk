@@ -248,6 +248,20 @@ func TestUpdateSignatureRequestFails(t *testing.T) {
 	assert.Equal(t, "deleted: This resource has been deleted", err.Error())
 }
 
+func TestClient_WithHTTPClient(t *testing.T) {
+	assert := assert.New(t)
+
+	client := &Client{}
+
+	defaultHTTPClient := client.getHTTPClient()
+
+	customHTTPClient := &http.Client{Transport: http.DefaultTransport}
+	client.WithHTTPClient(customHTTPClient)
+
+	assert.NotEqual(defaultHTTPClient, client.getHTTPClient())
+	assert.Equal(customHTTPClient, client.getHTTPClient())
+}
+
 // Private Functions
 
 func fixture(path string) *recorder.Recorder {
