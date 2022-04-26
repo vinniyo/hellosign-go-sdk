@@ -28,21 +28,21 @@ type Client struct {
 
 // CreationRequest contains the request parameters for create_embedded
 type CreationRequest struct {
-	TestMode           bool     `form_field:"test_mode"`
-	ClientID           string   `form_field:"client_id"`
-	FileURL            []string `form_field:"file_url"`
-	File               []string `form_field:"file"`
-	Title              string   `form_field:"title"`
-	Subject            string   `form_field:"subject"`
-	Message            string   `form_field:"message"`
-	SigningRedirectURL string   `form_field:"signing_redirect_url"`
-	Signers            []Signer `form_field:"signers"`
-	// Attachments            []Attachment `form_field:"attachments"`
-	CustomFields     []CustomField     `form_field:"custom_fields"`
-	CCEmailAddresses []string          `form_field:"cc_email_addresses"`
-	UseTextTags      bool              `form_field:"use_text_tags"`
-	HideTextTags     bool              `form_field:"hide_text_tags"`
-	Metadata         map[string]string `form_field:"metadata"`
+	TestMode           bool              `form_field:"test_mode"`
+	ClientID           string            `form_field:"client_id"`
+	FileURL            []string          `form_field:"file_url"`
+	File               []string          `form_field:"file"`
+	Title              string            `form_field:"title"`
+	Subject            string            `form_field:"subject"`
+	Message            string            `form_field:"message"`
+	SigningRedirectURL string            `form_field:"signing_redirect_url"`
+	Signers            []Signer          `form_field:"signers"`
+	Attachments        []Attachment      `form_field:"attachments"`
+	CustomFields       []CustomField     `form_field:"custom_fields"`
+	CCEmailAddresses   []string          `form_field:"cc_email_addresses"`
+	UseTextTags        bool              `form_field:"use_text_tags"`
+	HideTextTags       bool              `form_field:"hide_text_tags"`
+	Metadata           map[string]string `form_field:"metadata"`
 	// AllowDecline          int                   `form_field:"allow_decline"`
 	// AllowReassign         int                   `form_field:"allow_reassign"`
 	FormFieldsPerDocument [][]DocumentFormField `form_field:"form_fields_per_document"`
@@ -66,6 +66,13 @@ type DocumentFormField struct {
 	Height   int    `json:"height"`
 	Required bool   `json:"required"`
 	Signer   int    `json:"signer"`
+}
+
+type Attachment struct {
+	Name         string `field:"name"`
+	Instructions string `field:"instructions"`
+	SignerIndex  int    `field:"signer_index"`
+	Required     bool   `field:"required"`
 }
 
 type SignatureRequestResponse struct {
@@ -411,6 +418,38 @@ func (m *Client) marshalMultipartRequest(
 							return nil, nil, err
 						}
 						pin.Write([]byte(signer.Pin))
+					}
+				}
+			case "attachments":
+				for i, attachment := range request.Attachments {
+
+					if attachment.Name != "" {
+						name, err := w.CreateFormField(fmt.Sprintf("attachments[%v][name]", i))
+						if err != nil {
+							return nil, nil, err
+						}
+						name.Write([]byte(attachment.Name))
+					}
+					if attachment.Instructions != "" {
+						text, err := w.CreateFormField(fmt.Sprintf("attachments[%v][instructions]", i))
+						if err != nil {
+							return nil, nil, err
+						}
+						text.Write([]byte(attachment.Instructions))
+					}
+
+					order, err := w.CreateFormField(fmt.Sprintf("attachments[%v][signer_index]", i))
+					if err != nil {
+						return nil, nil, err
+					}
+					order.Write([]byte(strconv.Itoa(attachment.SignerIndex)))
+
+					if attachment.Required {
+						required, err := w.CreateFormField(fmt.Sprintf("attachments[%v][required]", i))
+						if err != nil {
+							return nil, nil, err
+						}
+						required.Write([]byte(strconv.Itoa(1)))
 					}
 				}
 
