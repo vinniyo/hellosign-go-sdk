@@ -18,7 +18,7 @@ func TestCreateEmbeddedSignatureRequestSuccess(t *testing.T) {
 
 	client := createVcrClient(vcr)
 
-	embReq := createEmbeddedRequest()
+	embReq := creationRequest()
 	res, err := client.CreateEmbeddedSignatureRequest(embReq)
 
 	assert.NotNil(t, res, "Should return response")
@@ -38,7 +38,7 @@ func TestCreateEmbeddedSignatureRequestSuccess2(t *testing.T) {
 
 	client := createVcrClient(vcr)
 
-	embReq := createEmbeddedRequest()
+	embReq := creationRequest()
 	res, err := client.CreateEmbeddedSignatureRequest(embReq)
 
 	assert.NotNil(t, res, "Should return response")
@@ -58,7 +58,7 @@ func TestCreateEmbeddedSignatureRequestMissingSigners(t *testing.T) {
 
 	client := createVcrClient(vcr)
 
-	embReq := createEmbeddedRequest()
+	embReq := creationRequest()
 	embReq.Signers = []Signer{}
 
 	res, err := client.CreateEmbeddedSignatureRequest(embReq)
@@ -74,7 +74,7 @@ func TestCreateEmbeddedSignatureRequestWarnings(t *testing.T) {
 
 	client := createVcrClient(vcr)
 
-	embReq := createEmbeddedRequest()
+	embReq := creationRequest()
 
 	res, err := client.CreateEmbeddedSignatureRequest(embReq)
 
@@ -91,7 +91,7 @@ func TestCreateEmbeddedSignatureRequestFileURL(t *testing.T) {
 
 	client := createVcrClient(vcr)
 
-	request := EmbeddedRequest{
+	request := CreationRequest{
 		TestMode: true,
 		ClientID: os.Getenv("HELLOSIGN_CLIENT_ID"),
 		FileURL:  []string{"http://www.pdf995.com/samples/pdf.pdf"},
@@ -289,9 +289,9 @@ func createVcrClient(transport *recorder.Recorder) Client {
 	return client
 }
 
-func createEmbeddedRequest() EmbeddedRequest {
+func creationRequest() CreationRequest {
 
-	return EmbeddedRequest{
+	return CreationRequest{
 		TestMode: true,
 		ClientID: os.Getenv("HELLOSIGN_CLIENT_ID"),
 		File: []string{
