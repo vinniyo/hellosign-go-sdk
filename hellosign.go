@@ -22,6 +22,7 @@ const (
 // Client contains APIKey and optional http.client
 type Client struct {
 	APIKey     string
+	ClientID   string
 	BaseURL    string
 	HTTPClient *http.Client
 }
@@ -181,7 +182,6 @@ func (m *Client) WithHTTPClient(httpClient *http.Client) *Client {
 
 // CreateEmbeddedSignatureRequest creates a new embedded signature
 func (m *Client) createSignatureRequest(path string, request CreationRequest) (*SignatureRequest, error) {
-
 	params, writer, err := m.marshalMultipartRequest(request)
 	if err != nil {
 		return nil, err
