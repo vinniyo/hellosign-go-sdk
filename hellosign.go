@@ -31,6 +31,7 @@ type Client struct {
 type CreationRequest struct {
 	TestMode              bool                  `form_field:"test_mode"`
 	ClientID              string                `form_field:"client_id"`
+	TemplateID            []string              `form_field:"template_ids"`
 	FileURL               []string              `form_field:"file_url"`
 	File                  []string              `form_field:"file"`
 	Title                 string                `form_field:"title"`
